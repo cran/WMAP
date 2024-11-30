@@ -80,9 +80,7 @@ bootStrap <- function(data, moments.ar, moreFeatures.v, B, method, method_wt.v, 
   for (b in 1:B)
   {
     if(verbose){
-      print("*************************")
-      print(paste("Bootstrap::",b))
-      print("*************************")
+      cat(paste("Bootstrap::",b,"\n"))
     }
 
     data.b = checkSample(data.in=data, wt_in.v=rep(1,data$N))

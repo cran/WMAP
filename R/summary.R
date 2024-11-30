@@ -7,7 +7,7 @@
 #' \describe{
 #'   \item{Weight length}{The total number of weights.}
 #'   \item{Weight distribution}{Statistical summary of weight values.}
-#'   \item{percentESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
+#'   \item{Percentage sample ESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
 #' }
 #'
 #' @examples
@@ -23,7 +23,7 @@ summary.balancing_weights <- function(object,...) {
   print(length(object$wt.v))
 
   cat("\n-------- Weight distribution --------\n")
-  print(summary(output1$wt.v))
+  print(summary(object$wt.v))
 
   cat("\n-------- Percentage sample ESS --------\n")
   print(object$percentESS)
@@ -38,8 +38,10 @@ summary.balancing_weights <- function(object,...) {
 #'
 #' \describe{
 #'   \item{Percentage sample ESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
-#'   \item{Mean differences with 95% CI}{The mean differences between two groups with their corresponding 95% confidence intervals.}
-#'   \item{Sigma ratios with 95% CI}{The ratios of standard deviations between two groups with their corresponding 95% confidence intervals.}
+#'   \item{Mean differences with 95% CI (if \code{B > 0})}{The mean differences between two groups with their corresponding 95% confidence intervals.}
+#'   \item{Sigma ratios with 95% CI (if \code{B > 0})}{The ratios of standard deviations between two groups with their corresponding 95% confidence intervals.}
+#'   \item{Mean differences (if \code{B = 0})}{The mean differences between two groups.}
+#'   \item{Sigma ratios (if \code{B = 0})}{The ratios of standard deviations between two groups.}
 #' }
 #'
 #' @examples
@@ -56,10 +58,25 @@ summary.causal_estimates <- function(object,...) {
   cat("-------- Percentage sample ESS --------\n")
   print(object$percentESS)
 
-  cat("\n-------- Mean differences with 95% CI --------\n")
-  CI.f = round(t(apply(object$collatedOtherFeatures.mt, 1, function(x) quantile(x,probs = c(0.025,0.975)))),2)
-  print(write_res(round(object$otherFeatures.v,2), CI.f))
+  if(!is.null(object$collatedESS)){
+    cat("\n-------- Mean differences with 95% CI --------\n")
+    CI.f = round(t(apply(object$collatedOtherFeatures.mt, 1, function(x) quantile(x,probs = c(0.025,0.975)))),2)
+    print(write_res(round(object$otherFeatures.v,2), CI.f))
 
-  cat("\n-------- Sigma ratios with 95% CI --------\n")
-  print(write_sigma_ratio(object))
+    cat("\n-------- Sigma ratios with 95% CI --------\n")
+    print(write_sigma_ratio(object))
+  } else if(is.null(object$collatedESS)){
+    cat("\n-------- Mean differences --------\n")
+    print(round(object$otherFeatures.v,2))
+
+    cat("\n-------- Sigma ratios --------\n")
+      num_outcomes = length(object$otherFeatures.v)
+      sigma_ratio_est = rep(NA, num_outcomes)
+      for (i in 1:num_outcomes) {
+        sigma_ratio_est[i] = object$moments.ar[,,i][2,1]/object$moments.ar[,,i][2,2]
+      }
+    print(round(sigma_ratio_est,2))
+  }
+
+
 }

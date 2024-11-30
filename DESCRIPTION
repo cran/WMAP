@@ -1,6 +1,6 @@
 Package: WMAP
 Title: Weighted Meta-Analysis with Pseudo-Populations
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
   person("Subharup", "Guha", , "s.guha@ufl.edu", role = c("aut","cre")),
   person("Mengqi", "Xu", , "m332xu@uwaterloo.ca", role = c("aut")),
@@ -15,11 +15,11 @@ Imports: pkgcond, ggplot2, zeallot, caret, randomForest, forcats,
         utils, stats, grDevices
 Depends: R (>= 3.5.0)
 NeedsCompilation: no
-Packaged: 2024-11-06 02:25:33 UTC; doggydoggy
+Packaged: 2024-11-29 21:00:29 UTC; doggydoggy
 Author: Subharup Guha [aut, cre],
   Mengqi Xu [aut],
   Kashish Priyam [aut],
   Yi Li [aut]
 Maintainer: Subharup Guha <s.guha@ufl.edu>
 Repository: CRAN
-Date/Publication: 2024-11-07 18:40:02 UTC
+Date/Publication: 2024-11-30 05:10:02 UTC

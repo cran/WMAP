@@ -71,7 +71,7 @@ Stage1 <- function(data, parm, method, flexorFlag, num.random, naturalGroupProp,
         }
 
         if (verbose & cc %% 10 == 0){
-          print(paste("FLEXOR... estimate", cc))
+          cat(paste("FLEXOR... estimate", cc,"\n"))
         }
       } # for (cc in (num.fixed+1):num.starts)
     } # if (num.random>0)

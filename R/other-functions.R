@@ -493,13 +493,14 @@ write_res = function(estimates, CI){
 
 write_sigma_ratio = function(output){
   B = length(output$collatedESS)
-  sigma_ratio_est = rep(NA, 8)
-  for (i in 1:8) {
+  num_outcomes = length(output$otherFeatures.v)
+  sigma_ratio_est = rep(NA, num_outcomes)
+  for (i in 1:num_outcomes) {
     sigma_ratio_est[i] = output$moments.ar[,,i][2,1]/output$moments.ar[,,i][2,2]
   }
 
-  CI_sigma_ratio = matrix(0,nrow = 8, ncol = 2)
-  for (i in 1:8) {
+  CI_sigma_ratio = matrix(0,nrow = num_outcomes, ncol = 2)
+  for (i in 1:num_outcomes) {
     sigma_ratio = rep(NA,B)
     for(b in 1:B){
       sigma_ratio[b] = (output$collatedMoments.ar[,,i,b][2,1]/output$collatedMoments.ar[,,i,b][2,2])
