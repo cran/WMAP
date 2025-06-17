@@ -76,7 +76,7 @@ causal.estimate <- function(S, Z, X, Y, B=100, method, naturalGroupProp=NULL, nu
 
   if (B>0){
 
-    c(collatedMoments.ar, collatedOtherFeatures.mt,collatedESS) %<-% bootStrap(data, moments.ar, otherFeatures.v, B, method=method, method_wt.v=output1$wt.v, naturalGroupProp, num.random.b = num.random, gammaMin, gammaMax, seed, verbose)
+    c(collatedMoments.ar, collatedOtherFeatures.mt,collatedESS) %<-% bootStrap(data, moments.ar, moreFeatures.v=otherFeatures.v, B, method=method, method_wt.v=output1$wt.v, naturalGroupProp, num.random.b = num.random, gammaMin, gammaMax, seed, verbose)
 
     output2$collatedMoments.ar = collatedMoments.ar
     output2$collatedOtherFeatures.mt = collatedOtherFeatures.mt

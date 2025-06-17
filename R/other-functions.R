@@ -1,6 +1,6 @@
 #' @importFrom caret confusionMatrix
 #' @importFrom randomForest randomForest
-#' @importFrom stats cor optim quantile rgamma
+#' @importFrom stats cor optim quantile rgamma rnorm
 #' @importFrom utils head
 
 
@@ -435,40 +435,71 @@ fn.Omnibus <- function(theta_z, gamma_s, data, parm)
 }
 
 
+fn.loop <- function(start_theta_z, start_gamma_s, data, parm, FUN, FUN2, tol = 1e-3, optim.maxit = 2, loop.maxit = 50) {
+  change <- Inf
+  count <- 0
+  parm$start_gamma_s <- start_gamma_s
+  parm$ESS <- 0
 
-fn.loop <- function(start_theta_z, start_gamma_s, data, parm, FUN, FUN2, tol=1e-3, optim.maxit=2, loop.maxit=50)
-{
+  while ((change > tol) && (count < loop.maxit)) {
+    old.parm <- parm
+    sub_gamma_s <- head(old.parm$start_gamma_s, -1)
 
-  change = Inf
-  count = 0
+    attempt <- 1
+    success <- FALSE
+    while (attempt <= 3 && !success) {
+      # Slightly perturb the starting point after the first attempt
+      sub_gamma_s_try <- if (attempt == 1) {
+        sub_gamma_s
+      } else {
+        jitter <- rnorm(length(sub_gamma_s), mean = 0, sd = 0.02)
+        pmax(pmin(sub_gamma_s + jitter, 1 - 1e-3), 1e-3)  # keep values in (0,1)
+      }
 
-  parm$start_gamma_s = start_gamma_s
+      result <- tryCatch({
+        optim(sub_gamma_s_try, FUN, gr = NULL, start_theta_z, old.parm, data,
+              control = list(maxit = optim.maxit), method = "CG")
+      }, error = function(e) NULL)
 
-  parm$ESS = 0
+      if (!is.null(result) && !is.null(result$par)) {
+        success <- TRUE
+      } else {
+        attempt <- attempt + 1
+      }
+    } #while (attempt <= 3 && !success) {
 
-  while ((change > tol) & (count < loop.maxit))
-  {
-    old.parm = parm
-    sub_gamma_s = head(old.parm$start_gamma_s, -1)
-    tmp = optim(sub_gamma_s, FUN, gr=NULL, start_theta_z, old.parm, data, control= list(maxit=optim.maxit), method = "CG")
+    if (!success) {
+      warning("All attempts at 'optim' failed. Returning NULL.")
 
-    sub_gamma_s = as.numeric(tmp$par)
-    parm$gamma_s = c(sub_gamma_s, 1-sum(sub_gamma_s))
-    parm$theta_z = start_theta_z
+      parm$gamma_s <- start_gamma_s
+      parm$theta_z <- start_theta_z
+      sub_gamma_s <- head(parm$gamma_s, -1)
 
-    parm$ESS = -tmp$value*data$N
+      value = fn.ESS_FLEXOR(sub_gamma_s, start_theta_z, parm, data)
+      parm$ESS <-  -value * data$N
 
-    change = abs(parm$ESS-old.parm$ESS)/old.parm$ESS
-    count = count + 1
-  }
+      break
+    }
 
-  parm$count = count
-  parm$change = change
+    if (success) {
+      sub_gamma_s <- as.numeric(result$par)
+      parm$gamma_s <- c(sub_gamma_s, 1 - sum(sub_gamma_s))
+      parm$theta_z <- start_theta_z
+      parm$ESS <- -result$value * data$N
 
-  parm = FUN2(parm$theta_z, parm$gamma_s, data, parm)
+      change <- abs(parm$ESS - old.parm$ESS) / old.parm$ESS
+      count <- count + 1
+    }
 
-  parm
+  } #  while ((change > tol) && (count < loop.maxit)) {
+
+  parm$count <- count
+  parm$change <- change
+  parm <- FUN2(parm$theta_z, parm$gamma_s, data, parm)
+
+  return(parm)
 }
+
 
 
 
@@ -493,14 +524,13 @@ write_res = function(estimates, CI){
 
 write_sigma_ratio = function(output){
   B = length(output$collatedESS)
-  num_outcomes = length(output$otherFeatures.v)
-  sigma_ratio_est = rep(NA, num_outcomes)
-  for (i in 1:num_outcomes) {
+  sigma_ratio_est = rep(NA, 8)
+  for (i in 1:8) {
     sigma_ratio_est[i] = output$moments.ar[,,i][2,1]/output$moments.ar[,,i][2,2]
   }
 
-  CI_sigma_ratio = matrix(0,nrow = num_outcomes, ncol = 2)
-  for (i in 1:num_outcomes) {
+  CI_sigma_ratio = matrix(0,nrow = 8, ncol = 2)
+  for (i in 1:8) {
     sigma_ratio = rep(NA,B)
     for(b in 1:B){
       sigma_ratio[b] = (output$collatedMoments.ar[,,i,b][2,1]/output$collatedMoments.ar[,,i,b][2,2])

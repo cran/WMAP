@@ -1,11 +1,21 @@
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
 
 
 fn.Stage2 <- function(local_data, local_wt.v)
 {
 
+  if (is.null(dim(local_data$Y))) {
+    local_data$Y <- matrix(local_data$Y, ncol = 1)
+  }
+
   featureNames = c("mean","sd", "median")
   moments.ar = array(,c(length(featureNames),local_data$K, ncol(local_data$Y)))
-  dimnames(moments.ar) = list(featureNames, paste("group",1:local_data$K), NULL)
+  dimnames(moments.ar) = list(
+    featureNames,
+    paste("group", 1:local_data$K),
+    colnames(local_data$Y) %||% paste("Y", seq_len(ncol(local_data$Y)))
+  )
 
 
   moreFeatureNames = "m1-m2"
@@ -25,7 +35,10 @@ fn.Stage2 <- function(local_data, local_wt.v)
     moments.ar[2,z,] = sqrt(abs(moments.ar[2,z,] - moments.ar[1,z,]^2))
 
     #median^{z}
-    moments.ar[3,z,] = apply(local_data$Y[flag.z,], 2, fn.PMF_quantile, q=.5, mass=local_wt.v[flag.z])
+    if (sum(flag.z) == 0)
+      stop(paste("No samples found for group", z, "in Stage 2."))
+
+    moments.ar[3,z,] = apply(local_data$Y[flag.z, , drop = FALSE], 2, fn.PMF_quantile, q = 0.5, mass = local_wt.v[flag.z])
 
   }
 
@@ -63,43 +76,52 @@ checkSample <- function(data.in, wt_in.v)
 }
 
 
+bootStrap <- function(data, moments.ar, moreFeatures.v, B, method, method_wt.v, naturalGroupProp, num.random.b, gammaMin, gammaMax, seed, verbose) {
 
-bootStrap <- function(data, moments.ar, moreFeatures.v, B, method, method_wt.v, naturalGroupProp, num.random.b, gammaMin, gammaMax, seed, verbose)
-{
+  local_data <- data
+  featureNames <- c("mean", "sd", "median")
 
-  collatedMoments.ar = array(,c(dim(moments.ar), B))
-  dimnames(collatedMoments.ar) = c(dimnames(moments.ar), list(NULL))
-  #
-  collatedMoreFeatures.mt = array(,c(length(moreFeatures.v), B))
-  dimnames(collatedMoreFeatures.mt) = c(names(moreFeatures.v), list(NULL))
+  collatedMoments.ar = array(NA, c(dim(moments.ar), B))
+  dimnames(collatedMoments.ar) = list(
+    featureNames,
+    paste("group", 1:local_data$K),
+    colnames(local_data$Y) %||% paste("Y", seq_len(ncol(local_data$Y))),
+    paste0("b", 1:B)
+  )
+
+  collatedMoreFeatures.mt = array(NA, c(length(moreFeatures.v), B))
+  dimnames(collatedMoreFeatures.mt) = list(names(moreFeatures.v), paste0("b", 1:B))
 
   ## ESS
-  collatedESS = rep(NA,B)
+  collatedESS = rep(NA, B)
 
-
-  for (b in 1:B)
-  {
-    if(verbose){
-      cat(paste("Bootstrap::",b,"\n"))
+  for (b in seq_len(B)) {
+    if (verbose) {
+      cat("*************************\n")
+      cat(paste("Bootstrap::", b), "\n")
+      cat("*************************\n")
     }
 
-    data.b = checkSample(data.in=data, wt_in.v=rep(1,data$N))
+    data.b = checkSample(data.in = data, wt_in.v = rep(1, data$N))
+    output1.b = balancing.weights(S = data.b$S, Z = data.b$Z, X = data.b$X,
+                                  method, naturalGroupProp, num.random.b,
+                                  gammaMin, gammaMax, seed, verbose)
+    data.b = checkSample(data.in = data, wt_in.v = output1.b$wt.v)
 
-    output1.b = balancing.weights(S=data.b$S, Z=data.b$Z, X=data.b$X, method, naturalGroupProp, num.random.b, gammaMin, gammaMax, seed, verbose)
-
-    data.b = checkSample(data.in=data, wt_in.v=output1.b$wt.v)
-
-    c(moments_b.ar, moreFeatures_b.v) %<-% fn.Stage2(local_data=data.b, local_wt.v=rep(1,data.b$N))
-
-    collatedMoments.ar[,,,b] = moments_b.ar
-    collatedMoreFeatures.mt[,b] = moreFeatures_b.v
-
-    ## botstrap ESS
-    collatedESS[b] = output1.b$percentESS
-
+    # Safe fn.Stage2 call
+    tryCatch({
+      c(moments_b.ar, moreFeatures_b.v) %<-% fn.Stage2(local_data = data.b, local_wt.v = rep(1, data.b$N))
+      collatedMoments.ar[,,,b] = moments_b.ar
+      collatedMoreFeatures.mt[,b] = moreFeatures_b.v
+      collatedESS[b] = output1.b$percentESS
+    }, error = function(e) {
+      if (verbose) {
+        message(sprintf("Skipping bootstrap sample %d due to error in fn.Stage2: %s", b, e$message))
+      }
+    })
   }
 
-  list(collatedMoments.ar, collatedMoreFeatures.mt,collatedESS)
+  list(collatedMoments.ar, collatedMoreFeatures.mt, collatedESS)
 }
 
 

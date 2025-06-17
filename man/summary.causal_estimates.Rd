@@ -16,10 +16,8 @@ Printed summary of the 'causal_estimates' object, including:
 
 \describe{
 \item{Percentage sample ESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
-\item{Mean differences with 95\% CI (if \code{B > 0})}{The mean differences between two groups with their corresponding 95\% confidence intervals.}
-\item{Sigma ratios with 95\% CI (if \code{B > 0})}{The ratios of standard deviations between two groups with their corresponding 95\% confidence intervals.}
-\item{Mean differences (if \code{B = 0})}{The mean differences between two groups.}
-\item{Sigma ratios (if \code{B = 0})}{The ratios of standard deviations between two groups.}
+\item{Mean differences with 95\% CI}{The mean differences between two groups with their corresponding 95\% confidence intervals.}
+\item{Sigma ratios with 95\% CI}{The ratios of standard deviations between two groups with their corresponding 95\% confidence intervals.}
 }
 }
 \description{

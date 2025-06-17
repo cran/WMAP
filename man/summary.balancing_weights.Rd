@@ -17,7 +17,7 @@ Printed summary of the 'balancing_weights' object, including:
 \describe{
 \item{Weight length}{The total number of weights.}
 \item{Weight distribution}{Statistical summary of weight values.}
-\item{Percentage sample ESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
+\item{percentESS}{Percentage sample effective sample size (ESS) for the pseudo-population.}
 }
 }
 \description{

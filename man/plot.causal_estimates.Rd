@@ -2,12 +2,12 @@
 % Please edit documentation in R/plot.R
 \name{plot.causal_estimates}
 \alias{plot.causal_estimates}
-\title{Boxplot of percent ESS}
+\title{Plot method for objects of class 'causal_estimates'}
 \usage{
 \method{plot}{causal_estimates}(x, ...)
 }
 \arguments{
-\item{x}{An object of class 'causal_estimates', the number of bootstrap samples \code{B} must be greater than 0.}
+\item{x}{An object of class 'causal_estimates'.}
 
 \item{...}{Additional arguments including:
 \describe{
@@ -19,12 +19,5 @@
 A boxplot of percent sample ESS for a specific weighting method (\code{FLEXOR}, \code{IC}, or \code{IGO})
 }
 \description{
-Plot method for objects of class 'causal_estimates' to generate a boxplot of percent sample effective sample size (ESS) for a specific weighting method using bootstrap samples.
-}
-\examples{
-data(demo)
-set.seed(1)
-output2 <- causal.estimate(S, Z, X, Y, B = 5, method = "IC", naturalGroupProp)
-plot(output2)
-
+Plot method for objects of class 'causal_estimates'
 }
